@@ -103,14 +103,30 @@ function checkIfValid(target){
     console.log(piece)
 
     switch(piece){
-        case 'pawn':
-           const starterRow = [8,9,10,11,12,13,14,15]
-           if(starterRow.includes(startId) && startId + width * 2 === targetId ||
-              startId + width === targetId||
-              startId + width - 1 === targetId && document.querySelector(`[square-id="${startId + width - 1}"]`).firstChild||
-              startId + width + 1 === targetId && document.querySelector(`[square-id="${startId + width + 1}"]`).firstChild){
-            return true
-           }
+        case 'pawn': {
+            const starterRow = [8, 9, 10, 11, 12, 13, 14, 15];
+        
+            // Moving forward (one square or two if on starting row)
+            if (starterRow.includes(startId) && startId + width * 2 === targetId && !document.querySelector(`[square-id="${startId + width}"]`).firstChild) {
+                return true; // Move two squares forward from the start
+            }
+            
+            if (startId + width === targetId && !document.querySelector(`[square-id="${targetId}"]`).firstChild) {
+                return true; // Move one square forward
+            }
+            
+            // Capturing diagonally
+            if (startId + width - 1 === targetId && document.querySelector(`[square-id="${targetId}"]`).firstChild) {
+                return true; // Capture diagonally to the left
+            }
+            
+            if (startId + width + 1 === targetId && document.querySelector(`[square-id="${targetId}"]`).firstChild) {
+                return true; // Capture diagonally to the right
+            }
+        
+            return false;
+        }
+        
            break;
         case 'knight':
             if(startId + width * 2 - 1 === targetId||
