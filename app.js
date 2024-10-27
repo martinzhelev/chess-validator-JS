@@ -90,25 +90,28 @@ function dragDrop(e){
         if(takenByOpponent && valid){
             e.target.parentNode.append(draggedElement)
             e.target.remove()
-            checkForCheck(playerGo)
+            console.log("right before CheckForCheck 1")
+            checkForCheck(playerGo === "whitePiece" ? whiteKingId : blackKingId);
             changePLayer()
 
             return
         }
         if(taken && !takenByOpponent){
+            console.log("right before CheckForCheck 2")
+
             console.log(taken)
             return
         }
         if(valid){
             e.target.append(draggedElement)
-            checkForCheck(playerGo)
+            console.log("right before CheckForCheck 3")
+            checkForCheck(playerGo === "whitePiece" ? whiteKingId : blackKingId);
             changePLayer()
+
 
             return
         }
     }
-    console.log(whiteKingId);
-console.log(blackKingId)
 }
 
 
@@ -366,9 +369,19 @@ function isPathBlocked(startId, targetId, step) {
 }
 
 // Define movement patterns for each piece
+function isPathBlocked(startId, targetId, step) {
+    for (let i = startId + step; i !== targetId; i += step) {
+        if (document.querySelector(`[square-id="${i}"]`).firstChild) {
+            return true; // Blocked by another piece
+        }
+    }
+    return false;
+}
+
+// Define movement patterns for each piece
 function isValidPawnMove(startId, targetId, isCapture = false) {
-    const forwardStep = width;
-    const startRow = [8, 9, 10, 11, 12, 13, 14, 15];
+    const forwardStep = playerGo === "whitePiece" ? width : -width; // Ensure pawns only move forward
+    const startRow = playerGo === "whitePiece" ? [8, 9, 10, 11, 12, 13, 14, 15] : [48, 49, 50, 51, 52, 53, 54, 55];
 
     if (isCapture) {
         return targetId === startId + forwardStep - 1 || targetId === startId + forwardStep + 1;
@@ -384,7 +397,9 @@ function isValidKnightMove(startId, targetId) {
         width * 2 - 1, width * 2 + 1, width - 2, width + 2,
         -(width * 2) - 1, -(width * 2) + 1, -(width - 2), -(width + 2)
     ];
-    return moves.includes(targetId - startId);
+    const move = targetId - startId;
+    // Check for valid knight moves and ensure the target is within bounds
+    return moves.includes(move) && targetId >= 0 && targetId < width * width;
 }
 
 function isValidBishopMove(startId, targetId) {
@@ -404,175 +419,31 @@ function isValidRookMove(startId, targetId) {
     const verticalMove = targetId % width === startId % width;
     const horizontalMove = Math.floor(startId / width) === Math.floor(targetId / width);
     const step = verticalMove ? (targetId > startId ? width : -width) : (targetId > startId ? 1 : -1);
-    return (verticalMove || horizontalMove) && !isPathBlocked(startId, targetId, step);
+
+    // Ensure that vertical and horizontal moves stay within bounds and are not blocked
+    if ((verticalMove || horizontalMove) && !isPathBlocked(startId, targetId, step)) {
+        if (verticalMove) {
+            const startColumn = startId % width;
+            const targetColumn = targetId % width;
+            return startColumn === targetColumn;
+        }
+        return true;
+    }
+    return false;
 }
 
 function isValidQueenMove(startId, targetId) {
+    // Queen combines rook and bishop moves
     return isValidBishopMove(startId, targetId) || isValidRookMove(startId, targetId);
 }
 
 function isValidKingMove(startId, targetId) {
     const validMoves = [width, -width, 1, -1, width + 1, width - 1, -(width + 1), -(width - 1)];
-    return validMoves.includes(targetId - startId);
+    const move = targetId - startId;
+    
+    // Check if the target position is a valid move and within bounds
+    return validMoves.includes(move) && targetId >= 0 && targetId < width * width;
 }
-
-
-
-
-
-
-
-
-
-// function checkForCheck() {
-//     const kingPosition = playerGo === 'whitePiece' ? whiteKingId : blackKingId;
-//     const opponentGo = playerGo === 'whitePiece' ? 'blackPiece' : 'whitePiece';
-    
-//     let inCheck = false;
-    
-//     allSquares.forEach(square => {
-//         const piece = square.firstChild?.id;
-//         if (square.firstChild?.firstChild?.classList.contains(opponentGo)) {
-//             const startId = Number(square.getAttribute('square-id'));
-//             if (checkIfValidKingCheck(startId, kingPosition, piece)) {
-//                 inCheck = true;
-//                 playerDisplay.textContent = "Check!";
-//                 return;
-//             }
-//         }
-//     });
-    
-//     if (inCheck) {
-//         if (isCheckmate()) {
-//             alert(`${playerGo} is in Checkmate!`)
-//         } else {
-//            alert(`${playerGo} is in Check!`) 
-//         }
-//     }
-// }
-
-
-// function isCheckmate() {
-//     let canEscapeCheck = false;
-    
-//     allSquares.forEach(square => {
-//         if (square.firstChild?.firstChild?.classList.contains(playerGo)) {
-//             const startId = Number(square.getAttribute('square-id'));
-//             const piece = square.firstChild.id;
-            
-//             allSquares.forEach(targetSquare => {
-//                 const targetId = Number(targetSquare.getAttribute('square-id'));
-//                 if (checkIfValidKingCheck(startId, targetId, piece)) {
-//                     canEscapeCheck = true;
-//                 }
-//             });
-//         }
-//     });
-    
-//     return !canEscapeCheck;
-// }
-
-// function checkIfValidKingCheck(startId, targetId, piece) {
-
-//     switch (piece) {
-//         case 'pawn': {
-//             // Pawns only capture diagonally
-//             if (startId + width - 1 === targetId || startId + width + 1 === targetId) {
-//                 return true; // Capture diagonally
-//             }
-//             break;
-//         }
-//         case 'knight': {
-//             // Knights move in an "L" shape
-//             const knightMoves = [
-//                 width * 2 - 1, width * 2 + 1, 
-//                 width - 2, width + 2, 
-//                 -(width * 2) - 1, -(width * 2) + 1, 
-//                 -(width - 2), -(width + 2)
-//             ];
-//             return knightMoves.includes(targetId - startId);
-//         }
-//         case 'bishop': {
-//             const directions = [
-//                 width + 1,    // Moving diagonally up-right
-//                 width - 1,    // Moving diagonally up-left
-//                 -(width + 1), // Moving diagonally down-left
-//                 -(width - 1)  // Moving diagonally down-right
-//             ];
-            
-//             for (let direction of directions) {
-//                 let currentId = startId;
-                
-//                 while (true) {
-//                     currentId += direction;
-                    
-//                     if (currentId < 0 || currentId >= width * width) break;
-                    
-//                     if (currentId === targetId) return true;
-                    
-//                     if (document.querySelector(`[square-id="${currentId}"]`).firstChild) break;
-//                 }
-//             }
-//             return false;
-//         }
-//         case 'rook':
-//             // Vertical movement (up and down)
-//             if (targetId % width === startId % width) {
-//                 const step = targetId > startId ? width : -width;
-//                 for (let i = startId + step; i !== targetId; i += step) {
-//                     if (document.querySelector(`[square-id="${i}"]`).firstChild) {
-//                         return false;  // Blocked by a piece
-//                     }
-//                 }
-//                 return true;
-//             }
-//             // Horizontal movement (left and right)
-//             if (Math.floor(startId / width) === Math.floor(targetId / width)) {
-//                 const step = targetId > startId ? 1 : -1;
-//                 for (let i = startId + step; i !== targetId; i += step) {
-//                     if (document.querySelector(`[square-id="${i}"]`).firstChild) {
-//                         return false;  // Blocked by a piece
-//                     }
-//                 }
-//                 return true;
-//             }
-//             break;
-//         case 'queen': {
-//             // Combines rook and bishop movement
-//             const directions = [
-//                 width + 1, width - 1, -(width + 1), -(width - 1) // Diagonal
-//             ];
-//             for (let direction of directions) {
-//                 let currentId = startId;
-//                 while (true) {
-//                     currentId += direction;
-//                     if (currentId < 0 || currentId >= width * width) break; // Out of bounds
-//                     if (currentId === targetId) return true; // Valid diagonal move
-//                     if (document.querySelector(`[square-id="${currentId}"]`).firstChild) break; // Blocked
-//                 }
-//             }
-//             // Rook-like movement
-//             if (targetId % width === startId % width || Math.floor(startId / width) === Math.floor(targetId / width)) {
-//                 return checkIfValidKingCheck(startId, targetId, 'rook'); // Use rook logic for straight moves
-//             }
-//             break;
-//         }
-//         case 'king': {
-//             // One square in any direction
-//             const validMoves = [width, -width, 1, -1, width + 1, width - 1, -(width + 1), -(width - 1)];
-//             return validMoves.includes(targetId - startId);
-//         }
-//         default:
-//             return false;
-//     }
-//     //return false;
-// }
-
-
-
-
-
-
 
 
 
