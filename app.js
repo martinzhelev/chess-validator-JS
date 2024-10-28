@@ -48,16 +48,7 @@ createBoard()
 
 
 const allSquares = document.querySelectorAll(".square")
-let whiteKingId;
-let blackKingId;
-allSquares.forEach(square => {
-    if (square.firstChild && square.firstChild.id === 'king' && square.firstChild.firstChild && square.firstChild.firstChild.classList.contains("whitePiece")) {
-        whiteKingId = square.getAttribute('square-id');
-    }
-    if (square.firstChild && square.firstChild.id === 'king' && square.firstChild.firstChild && square.firstChild.firstChild.classList.contains("blackPiece")) {
-        blackKingId = square.getAttribute('square-id');
-    }
-});
+
 
 
 allSquares.forEach(square => {
@@ -70,9 +61,19 @@ allSquares.forEach(square => {
 
 let startPsoitionId
 let draggedElement
+let whiteKingId;
+let blackKingId;
 function dragStart (e){
     startPsoitionId = e.target.parentNode.getAttribute('square-id')
     draggedElement = e.target
+    allSquares.forEach(square => {
+        if (square.firstChild && square.firstChild.id === 'king' && square.firstChild.firstChild && square.firstChild.firstChild.classList.contains("whitePiece")) {
+            whiteKingId = square.getAttribute('square-id');
+        }
+        if (square.firstChild && square.firstChild.id === 'king' && square.firstChild.firstChild && square.firstChild.firstChild.classList.contains("blackPiece")) {
+            blackKingId = square.getAttribute('square-id');
+        }
+    });
 }
 function dragOver (e){
     e.preventDefault()
@@ -81,17 +82,21 @@ function dragDrop(e){
     e.stopPropagation()
     const correctGo = draggedElement.firstChild.classList.contains(playerGo)
     const taken = e.target.classList.contains('piece')
-    const valid = checkIfValid(e.target)
+    const valid = checkIfValid(Number(startPsoitionId) ,Number(e.target.getAttribute('square-id')) || Number(e.target.parentNode.getAttribute('square-id')))
     const opponentGo = playerGo === 'whitePiece' ? 'blackPiece' : 'whitePiece'
     const takenByOpponent = e.target.firstChild?.classList.contains(opponentGo)
+    const check = checkIfValid(Number(e.target.getAttribute('square-id')) || Number(e.target.parentNode.getAttribute('square-id')), playerGo === "whitePiece" ? blackKingId : whiteKingId)
     console.log(e.target)
 
     if(correctGo){
         if(takenByOpponent && valid){
             e.target.parentNode.append(draggedElement)
             e.target.remove()
+            if(check){
+                alert("CHECK")
+            }
             console.log("right before CheckForCheck 1")
-            checkForCheck(playerGo === "whitePiece" ? whiteKingId : blackKingId);
+            //checkForCheck(playerGo === "whitePiece" ? whiteKingId : blackKingId);
             changePLayer()
 
             return
@@ -105,7 +110,10 @@ function dragDrop(e){
         if(valid){
             e.target.append(draggedElement)
             console.log("right before CheckForCheck 3")
-            checkForCheck(playerGo === "whitePiece" ? whiteKingId : blackKingId);
+            if(check === true){
+                alert("Check")
+            }
+            //checkForCheck(playerGo === "whitePiece" ? whiteKingId : blackKingId);
             changePLayer()
 
 
@@ -113,9 +121,6 @@ function dragDrop(e){
         }
     }
 }
-
-
-
 
 
 
@@ -172,9 +177,9 @@ function checkForCheck(kingPosition) {
 
 
 
-function checkIfValid(target){
-    const targetId = Number(target.getAttribute('square-id')) || Number(target.parentNode.getAttribute('square-id'))
-    const startId = Number(startPsoitionId)
+function checkIfValid(startId, targetId){
+    //const targetId = Number(target.getAttribute('square-id')) || Number(target.parentNode.getAttribute('square-id'))
+    // startId = Number(startPsoitionId)
     const piece = draggedElement.id
     console.log(targetId)
     console.log(startId)
@@ -195,6 +200,7 @@ function checkIfValid(target){
             
             // Capturing diagonally
             if (startId + width - 1 === targetId && document.querySelector(`[square-id="${targetId}"]`).firstChild) {
+               
                 return true; // Capture diagonally to the left
             }
             
@@ -235,7 +241,7 @@ function checkIfValid(target){
                     
                     if (currentId < 0 || currentId >= width * width) break;
                     
-                    if (currentId === targetId) return true;
+                    if (currentId == targetId) return true;
                     
                     if (document.querySelector(`[square-id="${currentId}"]`).firstChild) break;
                 }
